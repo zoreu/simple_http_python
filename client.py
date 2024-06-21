@@ -1,6 +1,7 @@
 import json as json_
 import chardet
 import six
+import logging
 
 if six.PY2:
     import httplib as http_client
@@ -8,6 +9,10 @@ if six.PY2:
 else:
     import http.client as http_client
     from urllib.parse import urlparse, urlencode
+
+# Configuração básica de logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class HTTP(object):
     def __init__(self, url, headers=None):
@@ -78,7 +83,7 @@ class HTTP(object):
                 self.conn.close()
 
         except Exception as e:
-            print(e)
+            logger.error("Error sending request: %s" % e)
 
         return self
 
@@ -90,7 +95,7 @@ class HTTP(object):
             self.conn.close()
             return d
         except Exception as e:
-            print(f"Failed to parse JSON: {e}")
+            logger.error("Failed to parse JSON: %s" % e)
             return {}
 
     @staticmethod
@@ -149,9 +154,9 @@ class HTTP(object):
                         break
                     yield chunk
             except Exception as e:
-                print(f"Error while iterating content: {e}")
+                logger.error("Error while iterating content: %s" % e)
         else:
-            print("No response object to iterate")
+            logger.error("No response object to iterate")
 
     def _extract_cookies(self, headers):
         cookies = {}
@@ -177,10 +182,12 @@ class HTTP(object):
             encoding = chardet.detect(raw_data)['encoding']
             return encoding
         except Exception as e:
-            print(f"Failed to detect encoding: {e}")
+            logger.error("Failed to detect encoding: %s" % e)
             return None
 
 # Example usage
-url = 'https://google.com'
-r = HTTP.get(url)
-print(r.text)
+if __name__ == "__main__":
+    url = 'https://google.com'
+    r = HTTP.get(url)
+    logger.info("Response text: %s" % r.text)
+    logger.info("Cookies: %s" % r.cookies)
